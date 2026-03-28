@@ -85,6 +85,9 @@ function run(sql, params=[]) {
 }
 function get(sql, params=[]) { return q(sql, params)[0] || null; }
 
+// ── Health Check (kein Auth nötig) ───────────────────────
+app.get('/api/health', (req, res) => res.json({ ok: true, status: 'running' }));
+
 // ── Auth Middleware ───────────────────────────────────────
 function auth(req, res, next) {
   const header = req.headers.authorization;
@@ -188,8 +191,11 @@ app.delete('/api/reset', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// Catch-All nur für Nicht-API-Routen (Frontend)
 if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+  app.get(/^(?!\/api).*$/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
 }
 
 initDB().then(() => {
